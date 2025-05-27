@@ -2,54 +2,14 @@
 "use client";
 
 // This component is now DEPRECATED.
-// Its message display logic has been merged into LexiGuidePageContent.tsx.
-// Its input functionality has been replaced by the new ChatInputBar.tsx component
-// for a unified, conversational UI.
+// The AI Legal Advisor chat functionality has been removed as per new requirements.
+// The application now focuses on a single-shot contract analysis.
 
-import React, { useState, useRef, useEffect } from 'react';
-import type { AdvisorMessage } from '@/types';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { cn } from '@/lib/utils';
-import { AdvisorIcon, LoadingIcon } from './icons';
+import React from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { AdvisorIcon } from './icons';
 
-export function AILegalAdvisor({
-  messages,
-  onSendMessage,
-  isLoading,
-  contractContextAvailable,
-}: {
-  messages: AdvisorMessage[];
-  onSendMessage: (question: string) => void;
-  isLoading: boolean;
-  contractContextAvailable: boolean;
-}) {
-  const [question, setQuestion] = useState('');
-  const scrollAreaRef = useRef<HTMLDivElement>(null);
-  const viewportRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (viewportRef.current) {
-      viewportRef.current.scrollTop = viewportRef.current.scrollHeight;
-    }
-  }, [messages]);
-
-  const handleSend = () => {
-    if (question.trim() && contractContextAvailable) {
-      onSendMessage(question);
-      setQuestion('');
-    }
-  };
-
-  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' && !isLoading) {
-      handleSend();
-    }
-  };
-
+export function AILegalAdvisor() {
   return (
     <Card className="shadow-lg h-full flex flex-col opacity-50 pointer-events-none"> {/* Visually indicate deprecation */}
       <CardHeader className="border-b">
@@ -58,77 +18,14 @@ export function AILegalAdvisor({
           AI Legal Advisor (Deprecated Component)
         </CardTitle>
         <CardDescription>
-          This chat interface is no longer active. Please use the main chat bar at the bottom.
+          This chat functionality has been removed. The app now provides a one-time contract analysis.
         </CardDescription>
       </CardHeader>
-      <CardContent className="flex-grow overflow-hidden p-0">
-        <ScrollArea className="h-full p-4" ref={scrollAreaRef} viewportRef={viewportRef}>
-          <div className="space-y-4">
-            {!contractContextAvailable && messages.length === 0 && (
-               <div className="text-center text-muted-foreground p-4">
-                Display area for AI Legal Advisor (disabled).
-              </div>
-            )}
-            {messages.map((msg) => (
-              <div
-                key={msg.id}
-                className={cn(
-                  'flex items-end gap-2 group',
-                  msg.type === 'user' ? 'justify-end' : 'justify-start'
-                )}
-              >
-                {msg.type !== 'user' && (
-                  <Avatar className="h-8 w-8 self-start">
-                    <AvatarFallback className="bg-primary text-primary-foreground">AI</AvatarFallback>
-                  </Avatar>
-                )}
-                <div
-                  className={cn(
-                    'max-w-[75%] rounded-lg px-3 py-2 text-sm shadow-sm',
-                    msg.type === 'user'
-                      ? 'bg-primary text-primary-foreground rounded-br-none'
-                      : 'bg-muted text-foreground rounded-bl-none',
-                    msg.type === 'error' && 'bg-destructive text-destructive-foreground'
-                  )}
-                >
-                  {msg.content.split('\n').map((line, i) => <p key={i}>{line}</p>)}
-                </div>
-                 {msg.type === 'user' && (
-                  <Avatar className="h-8 w-8 self-start">
-                    <AvatarFallback>U</AvatarFallback>
-                  </Avatar>
-                )}
-              </div>
-            ))}
-            {isLoading && messages.length > 0 && messages[messages.length -1].type === 'user' && (
-              <div className="flex items-end gap-2 justify-start">
-                 <Avatar className="h-8 w-8 self-start">
-                    <AvatarFallback className="bg-primary text-primary-foreground">AI</AvatarFallback>
-                  </Avatar>
-                <div className="bg-muted text-foreground rounded-lg px-3 py-2 text-sm shadow-sm rounded-bl-none">
-                  <LoadingIcon className="w-5 h-5 text-primary" />
-                </div>
-              </div>
-            )}
-          </div>
-        </ScrollArea>
-      </CardContent>
-      <CardFooter className="border-t p-4">
-        <div className="flex w-full items-center space-x-2">
-          <Input
-            type="text"
-            placeholder={"Chat input disabled..."}
-            value={question}
-            onChange={(e) => setQuestion(e.target.value)}
-            onKeyPress={handleKeyPress}
-            disabled={true}
-            className="flex-grow"
-          />
-          <Button onClick={handleSend} disabled={true}>
-            Send
-          </Button>
+      <CardContent className="flex-grow overflow-hidden p-4">
+        <div className="text-center text-muted-foreground p-4">
+          AI Chat has been disabled.
         </div>
-      </CardFooter>
+      </CardContent>
     </Card>
   );
 }

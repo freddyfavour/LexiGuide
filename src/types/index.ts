@@ -8,9 +8,10 @@ export interface Clause {
   originalIndex: number;
 }
 
-export type RiskLevel = 'low' | 'medium' | 'high';
-
 // Re-exporting to avoid direct import from ai/flows in many places and to potentially extend them later
+// These are kept for now as ProcessedContractView still uses RiskLevel and ClauseAnalysisData for structure,
+// but the actual per-clause risk/negotiation flows are being deprecated in favor of overall analysis.
+export type RiskLevel = 'low' | 'medium' | 'high';
 export type RiskAssessmentOutput = GenkitRiskAssessmentOutput;
 export type NegotiationSuggestionsOutput = GenkitNegotiationSuggestionsOutput;
 
@@ -31,10 +32,13 @@ export interface ProcessedClause {
   isLoadingSummary: boolean;
 }
 
-
-export interface AdvisorMessage {
-  id: string;
-  type: 'user' | 'ai' | 'error';
-  content: string;
+// New types for overall contract analysis
+export interface OverallContractAnalysisInput {
+  contractText: string;
 }
 
+export interface OverallContractAnalysisOutput {
+  generalRisks: string;
+  exploitationPotential: string;
+  generalAdvice: string;
+}
