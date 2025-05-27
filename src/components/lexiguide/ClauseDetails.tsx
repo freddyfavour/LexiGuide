@@ -1,6 +1,11 @@
 
 "use client";
 
+// This component is no longer used in the primary layout 
+// after the UI refactor to a conversational flow.
+// It's kept here for potential future use or if parts are needed elsewhere.
+// For now, it's effectively deprecated in the new structure.
+
 import React from 'react';
 import type { Clause, ClauseAnalysisData } from '@/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -12,7 +17,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 interface ClauseDetailsProps {
   clause: Clause | null;
   analysis: ClauseAnalysisData | null;
-  isLoadingAnalysis: boolean; // This will now primarily indicate summary loading for this component
+  isLoadingAnalysis: boolean;
 }
 
 export function ClauseDetails({ clause, analysis, isLoadingAnalysis }: ClauseDetailsProps) {
@@ -79,4 +84,3 @@ export function ClauseDetails({ clause, analysis, isLoadingAnalysis }: ClauseDet
     </Card>
   );
 }
-

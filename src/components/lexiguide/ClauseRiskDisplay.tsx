@@ -1,6 +1,14 @@
 
 "use client";
 
+// This component is no longer used in the primary layout 
+// after the UI refactor to a conversational flow.
+// Its logic for displaying risk is now integrated into LexiGuidePageContent.tsx
+// for the "Key Risk Highlights" section.
+// It's kept here for potential future reference or if parts are needed elsewhere.
+// For now, it's effectively deprecated in the new structure.
+
+
 import React from 'react';
 import type { ClauseAnalysisData, RiskLevel } from '@/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';

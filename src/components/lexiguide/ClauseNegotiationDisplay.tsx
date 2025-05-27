@@ -1,6 +1,13 @@
 
 "use client";
 
+// This component is no longer used in the primary layout 
+// after the UI refactor to a conversational flow.
+// Its logic for displaying negotiation points is now integrated into LexiGuidePageContent.tsx
+// for the "Key Negotiation Points" section.
+// It's kept here for potential future reference or if parts are needed elsewhere.
+// For now, it's effectively deprecated in the new structure.
+
 import React from 'react';
 import type { ClauseAnalysisData } from '@/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';

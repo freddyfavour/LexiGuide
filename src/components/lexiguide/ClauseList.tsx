@@ -1,6 +1,11 @@
 
 "use client";
 
+// This component is no longer used in the primary layout 
+// after the UI refactor to a conversational flow.
+// It's kept here for potential future use or if parts are needed elsewhere.
+// For now, it's effectively deprecated in the new structure.
+
 import React from 'react';
 import type { Clause } from '@/types';
 import { ScrollArea } from '@/components/ui/scroll-area';

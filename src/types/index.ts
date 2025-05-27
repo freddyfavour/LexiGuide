@@ -1,3 +1,4 @@
+
 import type { RiskAssessmentOutput as GenkitRiskAssessmentOutput } from '@/ai/flows/risk-assessment';
 import type { NegotiationSuggestionsOutput as GenkitNegotiationSuggestionsOutput } from '@/ai/flows/negotiation-suggestions';
 
@@ -22,8 +23,18 @@ export interface ClauseAnalysisData {
   negotiationError?: string;
 }
 
+// Represents a clause along with its fetched summary and loading state for the new UI
+export interface ProcessedClause {
+  clause: Clause;
+  summary?: string;
+  summaryError?: string;
+  isLoadingSummary: boolean;
+}
+
+
 export interface AdvisorMessage {
   id: string;
   type: 'user' | 'ai' | 'error';
   content: string;
 }
+

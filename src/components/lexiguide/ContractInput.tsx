@@ -19,9 +19,15 @@ export function ContractInput({ onProcessContract, isLoading }: ContractInputPro
   const [contractText, setContractText] = useState('');
   const { toast } = useToast();
 
-  const handleSubmit = () => {
+  const handleSubmitPastedText = () => {
     if (contractText.trim()) {
       onProcessContract(contractText);
+    } else {
+      toast({
+        title: "Empty Text",
+        description: "Please paste some contract text to process.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -35,8 +41,8 @@ export function ContractInput({ onProcessContract, isLoading }: ContractInputPro
           setContractText(text); 
           onProcessContract(text); 
           toast({
-            title: "File Loaded",
-            description: `${file.name} has been loaded and processed.`,
+            title: "File Loaded & Processing",
+            description: `${file.name} has been loaded and processing has started.`,
           });
         };
         reader.onerror = () => {
@@ -79,7 +85,7 @@ export function ContractInput({ onProcessContract, isLoading }: ContractInputPro
             value={contractText}
             onChange={(e) => setContractText(e.target.value)}
             placeholder="Paste the full text of your contract here..."
-            rows={8} // Adjusted default rows
+            rows={8}
             className="min-h-[150px] sm:min-h-[180px] md:min-h-[200px] text-sm leading-relaxed font-mono rounded-md shadow-inner bg-background"
             disabled={isLoading}
           />
@@ -95,12 +101,12 @@ export function ContractInput({ onProcessContract, isLoading }: ContractInputPro
             accept=".txt"
             onChange={handleFileChange}
             disabled={isLoading} 
-            className="text-sm"
+            className="text-sm file:mr-2 file:py-1.5 file:px-3 file:rounded-full file:border-0 file:text-xs file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
           />
           <p className="text-xs text-muted-foreground">Supported format: .txt. PDF/DOCX support is coming soon.</p>
         </div>
 
-        <Button onClick={handleSubmit} disabled={isLoading || !contractText.trim()} className="w-full transition-all duration-150 ease-in-out">
+        <Button onClick={handleSubmitPastedText} disabled={isLoading || !contractText.trim()} className="w-full transition-all duration-150 ease-in-out">
           {isLoading ? <LoadingIcon className="mr-2 h-4 w-4" /> : null}
           Process Pasted Text
         </Button>
