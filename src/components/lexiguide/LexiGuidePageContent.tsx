@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
-import type { ComprehensiveContractAnalysisOutput, ComprehensiveContractAnalysisInput } from '@/types';
+import type { ComprehensiveContractAnalysisOutput, ComprehensiveContractAnalysisInput, AnalyzedClause } from '@/types';
 import { comprehensiveContractAnalysis } from '@/ai/flows/comprehensive-contract-analysis';
 import { useToast } from '@/hooks/use-toast';
 import { ResetIcon, InfoIcon, LoadingIcon } from './icons';
@@ -11,7 +11,8 @@ import { ContractInputForm } from './ContractInputForm';
 import { ClauseWithSummaryAccordion } from './ClauseWithSummaryAccordion';
 import { OverallAnalysisDisplay } from './OverallAnalysisDisplay';
 import { ScrollArea } from '../ui/scroll-area';
-import { Card, CardContent } from '../ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
+import { BookMarked } from 'lucide-react'; // Import BookMarked
 
 export function LexiGuidePageContent() {
   const [analysisResult, setAnalysisResult] = useState<ComprehensiveContractAnalysisOutput | null>(null);
@@ -20,14 +21,13 @@ export function LexiGuidePageContent() {
   const [analysisError, setAnalysisError] = useState<string | null>(null);
 
   const { toast } = useToast();
-  const resultsEndRef = useRef<HTMLDivElement>(null); // For potential auto-scroll
+  const resultsEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!showInputForm && analysisResult) {
-      // Optional: Scroll to results after loading
-      // resultsEndRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    if (!showInputForm && (analysisResult || analysisError) && !isLoadingAnalysis) {
+      resultsEndRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
     }
-  }, [analysisResult, showInputForm]);
+  }, [analysisResult, analysisError, isLoadingAnalysis, showInputForm]);
 
   const handleProcessContract = async (contractText: string) => {
     if (!contractText.trim()) {
@@ -52,6 +52,11 @@ export function LexiGuidePageContent() {
     try {
       const input: ComprehensiveContractAnalysisInput = { contractText };
       const result = await comprehensiveContractAnalysis(input);
+      
+      if (!result || !result.analyzedClauses || !result.overallRiskAssessment || !result.overallRecommendations) {
+        console.error("Incomplete analysis result from AI:", result);
+        throw new Error("The AI returned an incomplete analysis. Please try again or check the contract text.");
+      }
       setAnalysisResult(result);
       if (result) {
         toast({
@@ -112,9 +117,10 @@ export function LexiGuidePageContent() {
               {analysisError && !isLoadingAnalysis && (
                 <Card className="shadow-lg">
                   <CardContent className="p-4 md:p-6 text-destructive">
-                     <div className="flex items-center justify-center p-6">
-                        <InfoIcon className="w-8 h-8 mr-3"/>
-                        <p className="text-lg">Error: {analysisError}</p>
+                     <div className="flex flex-col items-center justify-center p-6 text-center">
+                        <InfoIcon className="w-8 h-8 mb-2"/>
+                        <p className="text-lg font-semibold">Analysis Failed</p>
+                        <p className="text-sm">{analysisError}</p>
                     </div>
                   </CardContent>
                 </Card>
@@ -123,29 +129,42 @@ export function LexiGuidePageContent() {
               {analysisResult && !isLoadingAnalysis && (
                 <>
                   <Card className="shadow-lg">
-                    <CardContent className="p-4 md:p-6 divide-y divide-border">
-                      {analysisResult.analyzedClauses.length > 0 ? (
-                        analysisResult.analyzedClauses.map((item, index) => (
-                          <ClauseWithSummaryAccordion
-                            key={`clause-${index}`} // Using index as key since clause ID isn't directly from this structure
-                            clauseText={item.originalClauseText}
-                            summaryText={item.plainEnglishSummary}
-                            clauseOriginalIndex={index} // Assuming sequential order from AI
-                          />
-                        ))
-                      ) : (
-                        <div className="flex items-center justify-center p-6 text-muted-foreground">
-                          <InfoIcon className="w-6 h-6 mr-3"/>
-                          <p>No clauses were identified or summarized by the AI.</p>
-                        </div>
-                      )}
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2 text-lg font-semibold">
+                        <BookMarked className="w-5 h-5 text-primary" /> {/* Changed Icon */}
+                        Contract Clauses & Summaries
+                      </CardTitle>
+                      <CardDescription>
+                        Each clause from your contract is listed below with its plain-English summary and risk assessment.
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="p-0"> {/* Adjusted padding */}
+                      <div className="divide-y divide-border"> {/* Added wrapper for divide */}
+                        {analysisResult.analyzedClauses && analysisResult.analyzedClauses.length > 0 ? (
+                          analysisResult.analyzedClauses
+                            .filter((item): item is AnalyzedClause => !!item) // Filter out null/undefined items
+                            .map((item, index) => (
+                            <ClauseWithSummaryAccordion
+                              key={`clause-${index}-${item.originalClauseText.slice(0,10)}`} // More robust key
+                              clauseData={item}
+                              clauseOriginalIndex={index}
+                            />
+                          ))
+                        ) : (
+                          <div className="flex flex-col items-center justify-center p-6 text-muted-foreground text-center">
+                            <InfoIcon className="w-6 h-6 mb-2"/>
+                            <p className="font-semibold">No Clauses Identified</p>
+                            <p className="text-sm">The AI could not identify distinct clauses in the provided text, or no summary was generated.</p>
+                          </div>
+                        )}
+                      </div>
                     </CardContent>
                   </Card>
 
                   <OverallAnalysisDisplay
-                    analysis={analysisResult} // Pass the whole result as it contains what OverallAnalysisDisplay needs
-                    isLoading={false} // Already handled above
-                    error={null} // Already handled above
+                    analysis={analysisResult}
+                    isLoading={false}
+                    error={null}
                   />
                 </>
               )}
