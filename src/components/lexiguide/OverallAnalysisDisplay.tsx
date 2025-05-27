@@ -2,16 +2,16 @@
 "use client";
 
 import React from 'react';
-import type { OverallContractAnalysisOutput } from '@/types';
+import type { ComprehensiveContractAnalysisOutput } from '@/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { ShieldAlert, Lightbulb, AlertCircle, InfoIcon } from 'lucide-react'; // Added AlertCircle
+import { ShieldAlert, Lightbulb, AlertCircle, InfoIcon } from 'lucide-react';
 import { LoadingIcon } from './icons';
 
 
 interface OverallAnalysisDisplayProps {
-  analysis: OverallContractAnalysisOutput | null;
+  analysis: ComprehensiveContractAnalysisOutput | null;
   isLoading: boolean;
   error?: string | null;
 }
@@ -37,11 +37,6 @@ export function OverallAnalysisDisplay({ analysis, isLoading, error }: OverallAn
             <Skeleton className="h-5 w-1/3" />
             <Skeleton className="h-4 w-full" />
             <Skeleton className="h-4 w-4/6" />
-          </div>
-          <div className="space-y-2">
-            <Skeleton className="h-5 w-1/3" />
-            <Skeleton className="h-4 w-full" />
-            <Skeleton className="h-4 w-3/4" />
           </div>
         </CardContent>
       </Card>
@@ -95,28 +90,19 @@ export function OverallAnalysisDisplay({ analysis, isLoading, error }: OverallAn
         <div>
           <h3 className="text-md sm:text-lg font-semibold mb-2 flex items-center gap-2 text-primary">
             <ShieldAlert className="w-5 h-5" />
-            Potential Risks
+            Overall Risk Assessment
           </h3>
           <p className="text-sm leading-relaxed bg-muted/50 p-3 rounded-md border whitespace-pre-wrap">
-            {analysis.generalRisks || "No specific general risks were highlighted by the AI."}
-          </p>
-        </div>
-        <div>
-          <h3 className="text-md sm:text-lg font-semibold mb-2 flex items-center gap-2 text-primary">
-            <AlertCircle className="w-5 h-5" />
-            Exploitation Potential
-          </h3>
-          <p className="text-sm leading-relaxed bg-muted/50 p-3 rounded-md border whitespace-pre-wrap">
-            {analysis.exploitationPotential || "No specific exploitation potentials were highlighted by the AI."}
+            {analysis.overallRiskAssessment || "No specific general risks were highlighted by the AI."}
           </p>
         </div>
         <div>
           <h3 className="text-md sm:text-lg font-semibold mb-2 flex items-center gap-2 text-primary">
             <Lightbulb className="w-5 h-5" />
-            General Advice
+            Overall Recommendations
           </h3>
           <p className="text-sm leading-relaxed bg-muted/50 p-3 rounded-md border whitespace-pre-wrap">
-            {analysis.generalAdvice || "No specific general advice was provided by the AI."}
+            {analysis.overallRecommendations || "No specific general advice was provided by the AI."}
           </p>
         </div>
       </CardContent>
