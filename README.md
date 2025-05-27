@@ -19,6 +19,7 @@ LexiGuide is a web application designed to help users understand complex legal c
     *   [Next.js](https://nextjs.org/) (App Router)
     *   [React](https://reactjs.org/)
     *   [TypeScript](https://www.typescriptlang.org/)
+    *   [Firebase Studio](studio.firebase.google.com)
 *   **UI:**
     *   [ShadCN UI](https://ui.shadcn.com/)
     *   [Tailwind CSS](https://tailwindcss.com/)
@@ -40,11 +41,10 @@ These instructions will get you a copy of the project up and running on your loc
 
 1.  **Clone the repository:**
     ```bash
-    git clone <your-repository-url>
-    cd <project-directory>
+    git clone https://github.com/freddyfavour/LexiGuide
+    cd LexiGuide
     ```
 2.  **Create an environment file:**
-    Rename `.env.example` to `.env` (if an example file is provided) or create a new `.env` file in the root directory.
     You will need to add your Google Generative AI API key here for Genkit to function:
     ```env
     GOOGLE_API_KEY=YOUR_GOOGLE_API_KEY
@@ -99,14 +99,7 @@ And to start the production server:
 npm run start
 ```
 
-## Firebase Studio
-
-This project's development was significantly aided by [Firebase Studio](https://firebase.google.com/docs/studio), an AI-powered development environment that helped with code generation, modifications, and understanding.
-
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a pull request or open an issue.
 
-## License
-
-This project is licensed under the MIT License - see the LICENSE.md file (if available) for details.
