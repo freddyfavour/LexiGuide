@@ -3,7 +3,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { ChatInputBar } from './ChatInputBar';
-import type { Clause, ProcessedClause, AdvisorMessage, ClauseAnalysisData, RiskAssessmentOutput, NegotiationSuggestionsOutput } from '@/types';
+import type { Clause, ProcessedClause, AdvisorMessage, ClauseAnalysisData, RiskAssessmentOutput, NegotiationSuggestionsOutput, RiskLevel } from '@/types';
 import { summarizeClause } from '@/ai/flows/clause-summarization';
 import { assessRisk } from '@/ai/flows/risk-assessment';
 import { negotiationSuggestions } from '@/ai/flows/negotiation-suggestions';
@@ -187,7 +187,8 @@ export function LexiGuidePageContent() {
         negotiation: negotiationData,
         negotiationError,
       };
-      setClauseAnalyses(prev => ({ ...prev, ...newAnalysesUpdate }));
+      // Update state incrementally to show results as they come
+      setClauseAnalyses(prev => ({ ...prev, [clause.id]: newAnalysesUpdate[clause.id] }));
     }
     
     setIsLoadingAnalyses(false);
@@ -277,35 +278,41 @@ export function LexiGuidePageContent() {
           )}
 
           {processedClauses.length > 0 && (
-            <ProcessedContractView processedClauses={processedClauses} />
+            <ProcessedContractView 
+              processedClauses={processedClauses} 
+              clauseAnalyses={clauseAnalyses}
+              isLoadingAnalyses={isLoadingAnalyses}
+            />
           )}
           
           {hasCompletedFullProcessing && (
             <>
               <Card className="shadow-xl mt-6">
                 <CardHeader>
-                  <CardTitle className="text-lg font-semibold">Key Risk Highlights</CardTitle>
+                  <CardTitle className="text-lg font-semibold">Key Risk Highlights (Overall)</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  {isLoadingAnalyses && !hasAnyAnalysis && (
+                  {isLoadingAnalyses && !hasAnyAnalysis && ( // This check might be redundant if page shows "loading analyses" globally
                     <div className="flex items-center text-muted-foreground">
-                      <LoadingIcon className="w-5 h-5 mr-2" /> Loading risk assessments...
+                      <LoadingIcon className="w-5 h-5 mr-2" /> Loading overall risk assessments...
                     </div>
                   )}
                   {!isLoadingAnalyses && !hasAnyAnalysis && contractText && (
-                    <p className="text-muted-foreground">Risk analysis will appear here once processing is complete.</p>
+                    <p className="text-muted-foreground">Overall risk analysis will appear here once processing is complete.</p>
                   )}
                   {!isLoadingAnalyses && hasAnyAnalysis && Object.values(clauseAnalyses).filter(a => a.risk || a.riskError).length === 0 && (
-                    <p className="text-muted-foreground">No specific risks identified or an issue occurred during assessment.</p>
+                    <p className="text-muted-foreground">No specific overall risks identified or an issue occurred during assessment.</p>
                   )}
                   {Object.entries(clauseAnalyses).map(([clauseId, analysis]) => {
                     const clause = processedClauses.find(pc => pc.clause.id === clauseId)?.clause;
                     if (!clause || (!analysis.risk && !analysis.riskError)) return null;
-                    // Show all risks, not just non-low ones, to be comprehensive
-                    // if (analysis.risk && analysis.risk.riskLevel === 'low' && Object.keys(clauseAnalyses).filter(id => clauseAnalyses[id].risk && clauseAnalyses[id].risk?.riskLevel !== 'low').length > 0) return null;
+                     // Filter to show only medium and high risks in this overall summary, or if it's the only risk
+                    if (analysis.risk && analysis.risk.riskLevel === 'low' && Object.values(clauseAnalyses).some(a => a.risk && a.risk.riskLevel !== 'low')) {
+                        return null;
+                    }
 
                     return (
-                      <div key={`${clauseId}-risk`} className="p-3 border rounded-md bg-muted/30">
+                      <div key={`${clauseId}-overall-risk`} className="p-3 border rounded-md bg-muted/30">
                         <h4 className="font-semibold mb-1 text-sm">Clause {clause.originalIndex + 1}</h4>
                         {analysis.risk && (
                           <>
@@ -317,7 +324,7 @@ export function LexiGuidePageContent() {
                                 ${analysis.risk.riskLevel === 'high' ? 'bg-[hsl(var(--risk-high-background))] text-[hsl(var(--risk-high-foreground))] border-transparent' : ''}
                               `}
                             >
-                              <RiskLevelIndicator level={analysis.risk.riskLevel as 'low' | 'medium' | 'high'} />
+                              <RiskLevelIndicator level={analysis.risk.riskLevel as RiskLevel} />
                               <span>{analysis.risk.riskLevel.toUpperCase()} Risk: {analysis.risk.riskSummary}</span>
                             </Badge>
                             <p className="text-sm text-muted-foreground">
@@ -334,25 +341,27 @@ export function LexiGuidePageContent() {
 
               <Card className="shadow-xl mt-6">
                 <CardHeader>
-                  <CardTitle className="text-lg font-semibold">Key Negotiation Points</CardTitle>
+                  <CardTitle className="text-lg font-semibold">Key Negotiation Points (Overall)</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  {isLoadingAnalyses && !hasAnyAnalysis && (
+                   {isLoadingAnalyses && !hasAnyAnalysis && ( // This check might be redundant
                     <div className="flex items-center text-muted-foreground">
-                      <LoadingIcon className="w-5 h-5 mr-2" /> Loading negotiation suggestions...
+                      <LoadingIcon className="w-5 h-5 mr-2" /> Loading overall negotiation suggestions...
                     </div>
                   )}
                   {!isLoadingAnalyses && !hasAnyAnalysis && contractText && (
-                    <p className="text-muted-foreground">Negotiation points will appear here once processing is complete.</p>
+                    <p className="text-muted-foreground">Overall negotiation points will appear here once processing is complete.</p>
                   )}
                   {!isLoadingAnalyses && hasAnyAnalysis && Object.values(clauseAnalyses).filter(a => a.negotiation || a.negotiationError).length === 0 && (
-                    <p className="text-muted-foreground">No specific negotiation points identified or an issue occurred during assessment.</p>
+                    <p className="text-muted-foreground">No specific overall negotiation points identified or an issue occurred.</p>
                   )}
                   {Object.entries(clauseAnalyses).map(([clauseId, analysis]) => {
                     const clause = processedClauses.find(pc => pc.clause.id === clauseId)?.clause;
-                    if (!clause || (!analysis.negotiation && !analysis.negotiationError)) return null;
+                    // Show negotiation points if available, especially if risk is not low.
+                    if (!clause || (!analysis.negotiation && !analysis.negotiationError) || (analysis.risk?.riskLevel === 'low' && !analysis.negotiationError)) return null;
+                    
                     return (
-                      <div key={`${clauseId}-negotiation`} className="p-3 border rounded-md bg-muted/30">
+                      <div key={`${clauseId}-overall-negotiation`} className="p-3 border rounded-md bg-muted/30">
                         <h4 className="font-semibold mb-1 text-sm">Regarding Clause {clause.originalIndex + 1}:</h4>
                         {analysis.negotiation && (
                           <>
@@ -435,7 +444,7 @@ export function LexiGuidePageContent() {
             ? "Ask a question about your contract..."
             : "Paste contract here or upload a .txt file to start..."
         }
-        isSending={isLoadingContractProcessing || isLoadingSummaries || isAdvisorResponding}
+        isSending={isLoadingContractProcessing || isLoadingSummaries || isAdvisorResponding || isLoadingAnalyses}
         contractLoaded={contractHasBeenProcessed || !!contractText}
       />
     </div>
