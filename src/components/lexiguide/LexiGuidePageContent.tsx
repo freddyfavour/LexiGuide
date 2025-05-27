@@ -292,7 +292,7 @@ export function LexiGuidePageContent() {
                   <CardTitle className="text-lg font-semibold">Key Risk Highlights (Overall)</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  {isLoadingAnalyses && !hasAnyAnalysis && ( // This check might be redundant if page shows "loading analyses" globally
+                  {isLoadingAnalyses && !hasAnyAnalysis && ( 
                     <div className="flex items-center text-muted-foreground">
                       <LoadingIcon className="w-5 h-5 mr-2" /> Loading overall risk assessments...
                     </div>
@@ -305,11 +305,7 @@ export function LexiGuidePageContent() {
                   )}
                   {Object.entries(clauseAnalyses).map(([clauseId, analysis]) => {
                     const clause = processedClauses.find(pc => pc.clause.id === clauseId)?.clause;
-                    if (!clause || (!analysis.risk && !analysis.riskError)) return null;
-                     // Filter to show only medium and high risks in this overall summary, or if it's the only risk
-                    if (analysis.risk && analysis.risk.riskLevel === 'low' && Object.values(clauseAnalyses).some(a => a.risk && a.risk.riskLevel !== 'low')) {
-                        return null;
-                    }
+                    if (!clause || (!analysis.risk && !analysis.riskError)) return null; // Show if risk data or risk error exists
 
                     return (
                       <div key={`${clauseId}-overall-risk`} className="p-3 border rounded-md bg-muted/30">
@@ -344,7 +340,7 @@ export function LexiGuidePageContent() {
                   <CardTitle className="text-lg font-semibold">Key Negotiation Points (Overall)</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                   {isLoadingAnalyses && !hasAnyAnalysis && ( // This check might be redundant
+                   {isLoadingAnalyses && !hasAnyAnalysis && ( 
                     <div className="flex items-center text-muted-foreground">
                       <LoadingIcon className="w-5 h-5 mr-2" /> Loading overall negotiation suggestions...
                     </div>
@@ -357,8 +353,7 @@ export function LexiGuidePageContent() {
                   )}
                   {Object.entries(clauseAnalyses).map(([clauseId, analysis]) => {
                     const clause = processedClauses.find(pc => pc.clause.id === clauseId)?.clause;
-                    // Show negotiation points if available, especially if risk is not low.
-                    if (!clause || (!analysis.negotiation && !analysis.negotiationError) || (analysis.risk?.riskLevel === 'low' && !analysis.negotiationError)) return null;
+                    if (!clause || (!analysis.negotiation && !analysis.negotiationError)) return null; // Show if negotiation data or negotiation error exists
                     
                     return (
                       <div key={`${clauseId}-overall-negotiation`} className="p-3 border rounded-md bg-muted/30">
