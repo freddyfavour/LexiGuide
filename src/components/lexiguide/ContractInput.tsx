@@ -32,8 +32,8 @@ export function ContractInput({ onProcessContract, isLoading }: ContractInputPro
         const reader = new FileReader();
         reader.onload = (e) => {
           const text = e.target?.result as string;
-          setContractText(text); // Optionally update the textarea
-          onProcessContract(text); // Process the contract directly
+          setContractText(text); 
+          onProcessContract(text); 
           toast({
             title: "File Loaded",
             description: `${file.name} has been loaded and processed.`,
@@ -54,7 +54,6 @@ export function ContractInput({ onProcessContract, isLoading }: ContractInputPro
           variant: "destructive",
         });
       }
-      // Reset file input to allow uploading the same file again if needed
       event.target.value = ''; 
     }
   };
@@ -80,8 +79,8 @@ export function ContractInput({ onProcessContract, isLoading }: ContractInputPro
             value={contractText}
             onChange={(e) => setContractText(e.target.value)}
             placeholder="Paste the full text of your contract here..."
-            rows={10}
-            className="min-h-[200px] text-sm leading-relaxed font-mono rounded-md shadow-inner"
+            rows={8} // Adjusted default rows
+            className="min-h-[150px] sm:min-h-[180px] md:min-h-[200px] text-sm leading-relaxed font-mono rounded-md shadow-inner bg-background"
             disabled={isLoading}
           />
         </div>

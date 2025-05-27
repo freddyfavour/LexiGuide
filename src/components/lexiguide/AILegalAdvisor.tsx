@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useRef, useEffect } from 'react';
@@ -6,9 +7,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
-import { AdvisorIcon, LoadingIcon } from './icons'; // Assuming UserIcon is not needed or can be generic
+import { AdvisorIcon, LoadingIcon } from './icons';
 
 export function AILegalAdvisor({
   messages,
@@ -23,13 +24,11 @@ export function AILegalAdvisor({
 }) {
   const [question, setQuestion] = useState('');
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const viewportRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (scrollAreaRef.current) {
-      const scrollViewport = scrollAreaRef.current.querySelector('div[data-radix-scroll-area-viewport="true"]');
-      if (scrollViewport) {
-        scrollViewport.scrollTop = scrollViewport.scrollHeight;
-      }
+    if (viewportRef.current) {
+      viewportRef.current.scrollTop = viewportRef.current.scrollHeight;
     }
   }, [messages]);
 
@@ -58,7 +57,7 @@ export function AILegalAdvisor({
         </CardDescription>
       </CardHeader>
       <CardContent className="flex-grow overflow-hidden p-0">
-        <ScrollArea className="h-[calc(100vh-420px)] md:h-[calc(100vh-380px)] p-4" ref={scrollAreaRef}>
+        <ScrollArea className="h-full p-4" ref={scrollAreaRef} viewportRef={viewportRef}>
           <div className="space-y-4">
             {!contractContextAvailable && messages.length === 0 && (
                <div className="text-center text-muted-foreground p-4">

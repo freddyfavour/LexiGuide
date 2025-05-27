@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect, useMemo } from 'react';
@@ -117,7 +118,7 @@ export function LexiGuidePageContent() {
     };
 
     fetchAnalysis();
-  }, [selectedClauseId, clauses, contractText, toast]); // analysisCache removed to allow re-fetch if needed or errors occurred
+  }, [selectedClauseId, clauses, contractText, toast]);
 
   const handleAdvisorSendMessage = async (question: string) => {
     if (!contractText) {
@@ -146,9 +147,9 @@ export function LexiGuidePageContent() {
   const currentClauseAnalysis = useMemo(() => selectedClauseId ? analysisCache[selectedClauseId] : null, [selectedClauseId, analysisCache]);
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-semibold text-primary">Contract Analysis Dashboard</h2>
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2 sm:gap-0">
+        <h2 className="text-xl sm:text-2xl font-semibold text-primary">Contract Analysis Dashboard</h2>
         <Button variant="outline" onClick={handleReset} disabled={isLoadingContractProcessing || isLoadingAnalysis || isLoadingAdvisor}>
           <ResetIcon className="mr-2 h-4 w-4" /> Reset All
         </Button>
@@ -159,7 +160,7 @@ export function LexiGuidePageContent() {
           <InfoIcon className="h-5 w-5 text-primary" />
           <AlertTitle className="text-primary font-semibold">Welcome to LexiGuide!</AlertTitle>
           <AlertDescription>
-            To get started, paste your contract text into the input area below and click "Process Contract". 
+            To get started, paste your contract text into the input area below and click "Process Pasted Text" or upload a .txt file. 
             LexiGuide will then break it down into clauses for analysis.
           </AlertDescription>
         </Alert>
@@ -180,7 +181,7 @@ export function LexiGuidePageContent() {
           <ResizableHandle withHandle />
           <ResizablePanel defaultSize={70} minSize={30}>
             <Tabs defaultValue="details" className="h-full flex flex-col">
-              <TabsList className="m-2">
+              <TabsList className="mx-1 my-1 sm:mx-2 sm:my-2">
                 <TabsTrigger value="details" className="flex items-center gap-1.5 px-3 py-1.5 text-xs sm:text-sm" disabled={!selectedClauseId}>
                   <RiskAssessmentIcon className="w-4 h-4" /> Clause Analysis
                 </TabsTrigger>

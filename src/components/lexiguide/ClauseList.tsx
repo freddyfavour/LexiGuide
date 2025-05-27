@@ -1,3 +1,4 @@
+
 "use client";
 
 import React from 'react';
@@ -18,15 +19,15 @@ interface ClauseListProps {
 export function ClauseList({ clauses, selectedClauseId, onClauseSelect, isLoading }: ClauseListProps) {
   if (!clauses.length) {
     return (
-      <Card className="shadow-md">
+      <Card className="shadow-md h-full flex flex-col">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base font-semibold">
             <ClauseListIcon />
             Contract Clauses
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <p className="text-sm text-muted-foreground">
+        <CardContent className="flex-grow flex items-center justify-center">
+          <p className="text-sm text-muted-foreground text-center p-4">
             Process a contract to see the list of clauses here.
           </p>
         </CardContent>
@@ -35,17 +36,17 @@ export function ClauseList({ clauses, selectedClauseId, onClauseSelect, isLoadin
   }
 
   return (
-    <Card className="shadow-md">
+    <Card className="shadow-md h-full flex flex-col">
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-base font-semibold">
           <ClauseListIcon />
           Contract Clauses ({clauses.length})
         </CardTitle>
       </CardHeader>
-      <CardContent>
-        <ScrollArea className="h-[calc(100vh-300px)] md:h-[calc(100vh-260px)] rounded-md border p-2 bg-muted/20">
+      <CardContent className="flex-grow overflow-hidden p-2">
+        <ScrollArea className="h-full rounded-md border bg-muted/20 p-2">
           <div className="space-y-1">
-            {clauses.map((clause, index) => (
+            {clauses.map((clause) => (
               <Button
                 key={clause.id}
                 variant={selectedClauseId === clause.id ? 'default' : 'ghost'}
