@@ -1,5 +1,5 @@
 
-import type { z } from 'genkit';
+import { z } from 'genkit'; // Changed from "import type { z }"
 
 export interface Clause {
   id: string; // Retained for unique key in React rendering
