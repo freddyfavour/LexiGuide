@@ -93,18 +93,33 @@ export function LexiGuidePageContent() {
     setProcessedClauses(initialProcessedClauses);
     setIsLoadingContractProcessing(false);
 
-    for (let i = 0; i < initialProcessedClauses.length; i++) {
-      const pc = initialProcessedClauses[i];
+    // Capture all summary promises
+    const summaryPromises = initialProcessedClauses.map(async (pc, index) => {
       try {
         const summaryRes = await summarizeClause({ clauseText: pc.clause.text });
-        initialProcessedClauses[i] = { ...pc, summary: summaryRes.summary, isLoadingSummary: false };
+        // Update immediately for this specific clause
+        setProcessedClauses(prevPcs => {
+          const newPcs = [...prevPcs];
+          newPcs[index] = { ...newPcs[index], summary: summaryRes.summary, isLoadingSummary: false };
+          return newPcs;
+        });
+        return { ...pc, summary: summaryRes.summary, isLoadingSummary: false };
       } catch (e: any) {
         console.error(`Error summarizing clause ${pc.clause.id}:`, e);
-        initialProcessedClauses[i] = { ...pc, summaryError: e.message || "Failed to get summary.", isLoadingSummary: false };
+        const errorMsg = e.message || "Failed to get summary.";
+        setProcessedClauses(prevPcs => {
+          const newPcs = [...prevPcs];
+          newPcs[index] = { ...newPcs[index], summaryError: errorMsg, isLoadingSummary: false };
+          return newPcs;
+        });
+        return { ...pc, summaryError: errorMsg, isLoadingSummary: false };
       }
-      setProcessedClauses([...initialProcessedClauses]);
-    }
-    
+    });
+
+    // Wait for all summaries to complete
+    const completedProcessedClauses = await Promise.all(summaryPromises);
+    // setProcessedClauses(completedProcessedClauses); // Already updated incrementally
+
     setIsLoadingSummaries(false);
     toast({
       title: "Summaries Complete",
@@ -112,7 +127,8 @@ export function LexiGuidePageContent() {
     });
 
     if (rawClauses.length > 0) {
-      fetchAllAnalyses(rawClauses, text, initialProcessedClauses);
+      // Pass the version of processedClauses that has all summaries/errors
+      fetchAllAnalyses(rawClauses, text, completedProcessedClauses);
     }
   };
 
@@ -146,7 +162,6 @@ export function LexiGuidePageContent() {
   
   const fetchAllAnalyses = async (clausesToAnalyze: Clause[], fullContractText: string, currentProcessedClauses: ProcessedClause[]) => {
     setIsLoadingAnalyses(true);
-    // No new toast here, summary complete toast covers it.
 
     for (const clause of clausesToAnalyze) {
       let riskData: RiskAssessmentOutput | undefined;
@@ -154,6 +169,7 @@ export function LexiGuidePageContent() {
       let negotiationData: NegotiationSuggestionsOutput | undefined;
       let negotiationError: string | undefined;
 
+      // Assess Risk
       try {
         riskData = await assessRisk({ clauseText: clause.text });
       } catch (e: any) {
@@ -161,24 +177,31 @@ export function LexiGuidePageContent() {
         riskError = e.message || "Failed to assess risk.";
       }
 
-      const processedClause = currentProcessedClauses.find(pc => pc.clause.id === clause.id);
-      const clauseSummary = processedClause?.summary;
+      // Prepare for Negotiation Suggestions
+      const processedClauseForNegotiation = currentProcessedClauses.find(pc => pc.clause.id === clause.id);
+      const clauseSummary = processedClauseForNegotiation?.summary;
+      const summaryError = processedClauseForNegotiation?.summaryError;
 
-      if (clauseSummary && riskData) { // Negotiation depends on having a summary and risk data
+      // Attempt Negotiation Suggestions with clearer dependency checking
+      if (summaryError) {
+        negotiationError = `Negotiation suggestions skipped: Clause summary could not be generated.`;
+      } else if (!clauseSummary) {
+        negotiationError = "Negotiation suggestions skipped: Clause summary is missing.";
+      } else if (riskError) { 
+        negotiationError = `Negotiation suggestions skipped: Risk assessment failed for this clause.`;
+      } else if (!riskData) { 
+        negotiationError = "Negotiation suggestions skipped: Risk assessment returned no specific data for this clause.";
+      } else { 
         try {
           negotiationData = await negotiationSuggestions({
-            contractText: fullContractText, // Use full contract text for context
-            clauseSummary: clauseSummary,
+            contractText: fullContractText,
+            clauseSummary: clauseSummary, // This is the individual clause summary
             riskAssessment: `${riskData.riskLevel}: ${riskData.riskSummary}`,
           });
         } catch (e: any) {
           console.error(`Error suggesting negotiation for clause ${clause.id}:`, e);
           negotiationError = e.message || "Failed to get negotiation suggestions.";
         }
-      } else if (!clauseSummary) {
-        negotiationError = "Negotiation suggestions depend on a clause summary, which was not available.";
-      } else if (!riskData && !riskError) { // Only set negotiationError if riskData is missing AND there wasn't a riskError already
-        negotiationError = "Negotiation suggestions depend on risk assessment, which was not available or failed.";
       }
       
       const analysisForThisClause: Partial<Omit<ClauseAnalysisData, 'summary' | 'summaryError'>> = {
@@ -187,7 +210,7 @@ export function LexiGuidePageContent() {
         negotiation: negotiationData,
         negotiationError,
       };
-      // Update state incrementally to show results as they come
+      
       setClauseAnalyses(prev => ({ ...prev, [clause.id]: analysisForThisClause }));
     }
     
@@ -216,12 +239,12 @@ export function LexiGuidePageContent() {
     if (!chatInputValue.trim()) return;
     const question = chatInputValue;
 
-    if (!contractText && !contractHasBeenProcessed) { // If trying to send before contract load
-      processFullContractText(question); // Treat initial send as contract input
+    if (!contractText && !contractHasBeenProcessed) { 
+      processFullContractText(question); 
       return;
     }
     
-    if (!contractText) { // If contract processed but somehow text is empty (e.g. only file upload failed)
+    if (!contractText) { 
         toast({ title: "Cannot Send Message", description: "No contract context available. Please process a contract first.", variant: "destructive" });
         return;
     }
@@ -257,7 +280,7 @@ export function LexiGuidePageContent() {
         </Button>
       </div>
     
-      <ScrollArea className="flex-grow mb-4"> {/* Main content scroll */}
+      <ScrollArea className="flex-grow mb-4"> 
         <div className="space-y-4 sm:space-y-6">
           {!contractHasBeenProcessed && !isLoadingContractProcessing && (
             <Alert className="border-primary/30 bg-primary/5">
@@ -297,16 +320,16 @@ export function LexiGuidePageContent() {
                       <LoadingIcon className="w-5 h-5 mr-2" /> Loading overall risk assessments...
                     </div>
                   )}
-                  {!isLoadingAnalyses && !hasAnyAnalysis && contractText && (
+                  {!isLoadingAnalyses && !hasAnyAnalysis && contractText && !processedClauses.some(pc => pc.isLoadingSummary) && (
                     <p className="text-muted-foreground">Overall risk analysis will appear here once processing is complete.</p>
                   )}
                   {Object.entries(clauseAnalyses).map(([clauseId, analysis]) => {
-                    const clause = processedClauses.find(pc => pc.clause.id === clauseId)?.clause;
-                    if (!clause) return null; // Should not happen if clauseAnalyses is in sync with processedClauses
+                    const clauseData = processedClauses.find(pc => pc.clause.id === clauseId)?.clause;
+                    if (!clauseData) return null;
 
                     return (
                       <div key={`${clauseId}-overall-risk`} className="p-3 border rounded-md bg-muted/30">
-                        <h4 className="font-semibold mb-1 text-sm">Clause {clause.originalIndex + 1}</h4>
+                        <h4 className="font-semibold mb-1 text-sm">Clause {clauseData.originalIndex + 1}</h4>
                         {analysis.risk ? (
                           <>
                             <Badge
@@ -328,7 +351,7 @@ export function LexiGuidePageContent() {
                         ) : analysis.riskError ? (
                           <p className="text-xs text-destructive mt-1">Error assessing risk: {analysis.riskError}</p>
                         ) : (
-                          <p className="text-sm text-muted-foreground">No specific risk information identified or assessment is pending.</p>
+                          <p className="text-sm text-muted-foreground">No specific risk information identified or assessment is pending for this clause.</p>
                         )}
                       </div>
                     );
@@ -349,16 +372,16 @@ export function LexiGuidePageContent() {
                       <LoadingIcon className="w-5 h-5 mr-2" /> Loading overall negotiation suggestions...
                     </div>
                   )}
-                  {!isLoadingAnalyses && !hasAnyAnalysis && contractText && (
+                  {!isLoadingAnalyses && !hasAnyAnalysis && contractText && !processedClauses.some(pc => pc.isLoadingSummary) && (
                     <p className="text-muted-foreground">Overall negotiation points will appear here once processing is complete.</p>
                   )}
                   {Object.entries(clauseAnalyses).map(([clauseId, analysis]) => {
-                    const clause = processedClauses.find(pc => pc.clause.id === clauseId)?.clause;
-                    if (!clause) return null;
+                    const clauseData = processedClauses.find(pc => pc.clause.id === clauseId)?.clause;
+                    if (!clauseData) return null;
                     
                     return (
                       <div key={`${clauseId}-overall-negotiation`} className="p-3 border rounded-md bg-muted/30">
-                        <h4 className="font-semibold mb-1 text-sm">Regarding Clause {clause.originalIndex + 1}:</h4>
+                        <h4 className="font-semibold mb-1 text-sm">Regarding Clause {clauseData.originalIndex + 1}:</h4>
                         {analysis.negotiation ? (
                           <>
                             <p className="text-sm mb-1">
@@ -375,7 +398,7 @@ export function LexiGuidePageContent() {
                         ) : analysis.negotiationError ? (
                           <p className="text-xs text-destructive mt-1">Error suggesting negotiations: {analysis.negotiationError}</p>
                         ) : (
-                          <p className="text-sm text-muted-foreground">No specific negotiation points identified or analysis is pending.</p>
+                          <p className="text-sm text-muted-foreground">No specific negotiation points identified or analysis is pending for this clause.</p>
                         )}
                       </div>
                     );
@@ -388,7 +411,6 @@ export function LexiGuidePageContent() {
             </>
           )}
           
-          {/* AI Advisor Chat Messages */}
           {advisorMessages.length > 0 && (
             <div className="space-y-4 mt-6">
               <h3 className="text-lg font-semibold text-primary flex items-center gap-2"><AdvisorIcon /> AI Legal Advisor Chat</h3>
@@ -435,7 +457,7 @@ export function LexiGuidePageContent() {
               )}
             </div>
           )}
-          <div ref={messagesEndRef} /> {/* Element to scroll to */}
+          <div ref={messagesEndRef} /> 
         </div>
       </ScrollArea>
 
@@ -455,3 +477,5 @@ export function LexiGuidePageContent() {
     </div>
   );
 }
+
+      
