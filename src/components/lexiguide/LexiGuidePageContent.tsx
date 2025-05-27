@@ -4,8 +4,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import type { Clause, ProcessedClause, OverallContractAnalysisOutput, RiskLevel } from '@/types';
 import { summarizeClause } from '@/ai/flows/clause-summarization';
-import { assessRisk } from '@/ai/flows/risk-assessment'; // Import assessRisk
-import { analyzeOverallContract } from '@/ai/flows/overall-contract-analysis'; 
+import { assessRisk } from '@/ai/flows/risk-assessment';
+import { analyzeOverallContract } from '@/ai/flows/overall-contract-analysis';
 import { useToast } from '@/hooks/use-toast';
 import { ResetIcon, InfoIcon, LoadingIcon } from './icons';
 import { Button } from '../ui/button';
@@ -21,14 +21,14 @@ export function LexiGuidePageContent() {
   const [contractText, setContractText] = useState<string>('');
   const [processedClauses, setProcessedClauses] = useState<ProcessedClause[]>([]);
   const [overallAnalysis, setOverallAnalysis] = useState<OverallContractAnalysisOutput | null>(null);
-  
+
   const [showInputForm, setShowInputForm] = useState(true);
   const [isLoadingContractProcessing, setIsLoadingContractProcessing] = useState(false);
   const [isLoadingSummaries, setIsLoadingSummaries] = useState(false);
-  const [isLoadingRisks, setIsLoadingRisks] = useState(false); // New state for risk loading
+  const [isLoadingRisks, setIsLoadingRisks] = useState(false);
   const [isLoadingOverallAnalysis, setIsLoadingOverallAnalysis] = useState(false);
   const [overallAnalysisError, setOverallAnalysisError] = useState<string | null>(null);
-  
+
   const { toast } = useToast();
   const resultsEndRef = useRef<HTMLDivElement>(null);
 
@@ -48,8 +48,8 @@ export function LexiGuidePageContent() {
       });
       return;
     }
-    
-    setIsLoadingContractProcessing(true); 
+
+    setIsLoadingContractProcessing(true);
     setShowInputForm(false);
     setContractText(text);
     setProcessedClauses([]);
@@ -57,10 +57,10 @@ export function LexiGuidePageContent() {
     setOverallAnalysisError(null);
 
     const rawClauses = text
-      .split(/\n\s*\n+/) 
+      .split(/\n\s*\n+/)
       .map((t, i) => ({ id: `clause-${Date.now()}-${i}`, text: t.trim(), originalIndex: i }))
       .filter(c => c.text.length > 0);
-    
+
     if (rawClauses.length === 0) {
       toast({
         title: "No Clauses Found",
@@ -68,103 +68,82 @@ export function LexiGuidePageContent() {
         variant: "default",
       });
       setIsLoadingContractProcessing(false);
-      setShowInputForm(true); 
+      setShowInputForm(true);
       return;
     }
 
     toast({
       title: "Processing Contract...",
-      description: `Identified ${rawClauses.length} clauses. Generating summaries, risk assessments, and overall analysis. This may take a few moments.`,
+      description: `Identified ${rawClauses.length} clauses. Generating summaries, risk assessments, and overall analysis. This may take some time.`,
     });
-    
+
     setIsLoadingContractProcessing(false);
 
-    // Initialize processedClauses with loading states for both summary and risk
     let initialProcessedClauses: ProcessedClause[] = rawClauses.map(clause => ({
       clause,
       isLoadingSummary: true,
-      isLoadingRisk: true, 
+      isLoadingRisk: true,
     }));
-    setProcessedClauses(initialProcessedClauses); 
+    setProcessedClauses(initialProcessedClauses);
 
-    // Fetch summaries
+    // Fetch summaries sequentially
     setIsLoadingSummaries(true);
-    const summaryPromises = initialProcessedClauses.map(async (pc, index) => {
+    let clausesWithSummaries: ProcessedClause[] = [...initialProcessedClauses];
+    for (let i = 0; i < clausesWithSummaries.length; i++) {
+      const pc = clausesWithSummaries[i];
       try {
         const summaryRes = await summarizeClause({ clauseText: pc.clause.text });
-        setProcessedClauses(prevPcs => {
-          const newPcs = [...prevPcs];
-          if (newPcs[index]) {
-            newPcs[index] = { ...newPcs[index], summary: summaryRes.summary, isLoadingSummary: false };
-          }
-          return newPcs;
-        });
+        clausesWithSummaries[i] = { ...pc, summary: summaryRes.summary, isLoadingSummary: false };
+        setProcessedClauses([...clausesWithSummaries]); // Update state incrementally
       } catch (e: any) {
         console.error(`Error summarizing clause ${pc.clause.id}:`, e);
         const errorMsg = e.message || "Failed to get summary.";
-        setProcessedClauses(prevPcs => {
-          const newPcs = [...prevPcs];
-           if (newPcs[index]) {
-            newPcs[index] = { ...newPcs[index], summaryError: errorMsg, isLoadingSummary: false };
-           }
-          return newPcs;
-        });
+        clausesWithSummaries[i] = { ...pc, summaryError: errorMsg, isLoadingSummary: false };
+        setProcessedClauses([...clausesWithSummaries]); // Update state incrementally
       }
-    });
-    
-    await Promise.allSettled(summaryPromises); 
+    }
     setIsLoadingSummaries(false);
-    if (initialProcessedClauses.some(pc => pc.summary && !pc.summaryError && !pc.isLoadingSummary)){ // check if some summaries actually loaded
-        toast({
+    if (clausesWithSummaries.some(pc => pc.summary && !pc.summaryError && !pc.isLoadingSummary)) {
+      toast({
         title: "Clause Summaries Complete",
         description: "All clause summaries have been generated.",
-        });
+      });
     }
 
-    // Fetch risk assessments
+
+    // Fetch risk assessments sequentially
     setIsLoadingRisks(true);
-    const riskPromises = initialProcessedClauses.map(async (pc, index) => {
+    let clausesWithRisks: ProcessedClause[] = [...clausesWithSummaries]; // Start with summaries loaded
+    for (let i = 0; i < clausesWithRisks.length; i++) {
+      const pc = clausesWithRisks[i];
       try {
         const riskRes = await assessRisk({ clauseText: pc.clause.text });
-        setProcessedClauses(prevPcs => {
-          const newPcs = [...prevPcs];
-          if (newPcs[index]) {
-            newPcs[index] = { ...newPcs[index], risk: riskRes, isLoadingRisk: false };
-          }
-          return newPcs;
-        });
+        clausesWithRisks[i] = { ...pc, risk: riskRes, isLoadingRisk: false };
+        setProcessedClauses([...clausesWithRisks]); // Update state incrementally
       } catch (e: any) {
         console.error(`Error assessing risk for clause ${pc.clause.id}:`, e);
         const errorMsg = e.message || "Failed to assess risk.";
-        setProcessedClauses(prevPcs => {
-          const newPcs = [...prevPcs];
-           if (newPcs[index]) {
-            newPcs[index] = { ...newPcs[index], riskError: errorMsg, isLoadingRisk: false };
-           }
-          return newPcs;
-        });
+        clausesWithRisks[i] = { ...pc, riskError: errorMsg, isLoadingRisk: false };
+        setProcessedClauses([...clausesWithRisks]); // Update state incrementally
       }
-    });
-
-    await Promise.allSettled(riskPromises);
+    }
     setIsLoadingRisks(false);
-     if (initialProcessedClauses.some(pc => pc.risk && !pc.riskError && !pc.isLoadingRisk)){
-        toast({
+    if (clausesWithRisks.some(pc => pc.risk && !pc.riskError && !pc.isLoadingRisk)) {
+      toast({
         title: "Risk Assessments Complete",
         description: "Risk levels for clauses have been determined.",
-        });
+      });
     }
-
 
     // Fetch overall analysis
     setIsLoadingOverallAnalysis(true);
     try {
       const overallRes = await analyzeOverallContract({ contractText: text });
       setOverallAnalysis(overallRes);
-      if (overallRes) { 
+      if (overallRes) {
         toast({
-            title: "Overall Analysis Complete",
-            description: "Holistic contract insights are now available.",
+          title: "Overall Analysis Complete",
+          description: "Holistic contract insights are now available.",
         });
       }
     } catch (e: any) {
@@ -179,20 +158,20 @@ export function LexiGuidePageContent() {
     }
     setIsLoadingOverallAnalysis(false);
   };
-  
+
   const handleReset = () => {
     setContractText('');
     setProcessedClauses([]);
     setOverallAnalysis(null);
     setOverallAnalysisError(null);
-    
+
     setShowInputForm(true);
     setIsLoadingContractProcessing(false);
     setIsLoadingSummaries(false);
-    setIsLoadingRisks(false); // Reset risk loading state
+    setIsLoadingRisks(false);
     setIsLoadingOverallAnalysis(false);
-    
-    toast({ title: "Application Reset", description: "All contract data has been cleared."});
+
+    toast({ title: "Application Reset", description: "All contract data has been cleared." });
   };
 
   const isProcessing = isLoadingContractProcessing || isLoadingSummaries || isLoadingRisks || isLoadingOverallAnalysis;
@@ -200,12 +179,12 @@ export function LexiGuidePageContent() {
   return (
     <div className="flex flex-col h-full">
       {showInputForm ? (
-        <ContractInputForm 
-          onProcessContract={handleProcessContract} 
-          isLoading={isProcessing} 
+        <ContractInputForm
+          onProcessContract={handleProcessContract}
+          isLoading={isProcessing}
         />
       ) : (
-        <div className="flex flex-col flex-1 overflow-hidden"> 
+        <div className="flex flex-col flex-1 overflow-hidden">
           <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2 mb-4 sm:mb-6 px-1 pt-2">
             <h2 className="text-xl sm:text-2xl font-semibold text-primary">Contract Analysis Report</h2>
             <Button variant="outline" onClick={handleReset} disabled={isProcessing}>
@@ -213,7 +192,7 @@ export function LexiGuidePageContent() {
             </Button>
           </div>
 
-          <ScrollArea className="flex-1"> 
+          <ScrollArea className="flex-1">
             <div className="space-y-4 sm:space-y-6 px-1 pb-6">
               <Card className="shadow-lg">
                 <CardContent className="p-4 md:p-6 divide-y divide-border">
@@ -228,7 +207,7 @@ export function LexiGuidePageContent() {
                       <ClauseWithSummaryAccordion key={pc.clause.id} processedClause={pc} />
                     ))
                   ) : (
-                     !isProcessing && ( 
+                     !isProcessing && (
                         <div className="flex items-center justify-center p-6 text-muted-foreground">
                             <InfoIcon className="w-6 h-6 mr-3"/>
                             <p>No clauses to display or an issue occurred during processing.</p>
@@ -238,8 +217,8 @@ export function LexiGuidePageContent() {
                 </CardContent>
               </Card>
 
-              <OverallAnalysisDisplay 
-                analysis={overallAnalysis} 
+              <OverallAnalysisDisplay
+                analysis={overallAnalysis}
                 isLoading={isLoadingOverallAnalysis}
                 error={overallAnalysisError}
               />
