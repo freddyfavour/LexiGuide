@@ -54,15 +54,15 @@ body {
     --sidebar-border: hsl(var(--border));
     --sidebar-ring: hsl(var(--ring));
 
-    /* Risk colors are removed as per-clause risk coloring is no longer used */
-    /* --risk-low-background: 130 50% 92%; */
-    /* --risk-low-foreground: 130 60% 25%; */
+    /* Risk colors - RE-ADDED */
+    --risk-low-background: 130 50% 92%; /* Light Green */
+    --risk-low-foreground: 130 60% 25%; /* Dark Green */
     
-    /* --risk-medium-background: 210 70% 93%; */
-    /* --risk-medium-foreground: 210 60% 30%; */
+    --risk-medium-background: 210 70% 93%; /* Light Blue */
+    --risk-medium-foreground: 210 60% 30%; /* Dark Blue */
     
-    /* --risk-high-background: 0 75% 94%; */
-    /* --risk-high-foreground: 0 70% 35%; */
+    --risk-high-background: 0 75% 94%; /* Light Red */
+    --risk-high-foreground: 0 70% 35%; /* Dark Red */
   }
 
   .dark {
@@ -110,15 +110,15 @@ body {
     --sidebar-border: 220 15% 25%; /* Slightly lighter dark border */
     --sidebar-ring: hsl(var(--ring));
 
-    /* Risk colors are removed for dark mode as well */
-    /* --risk-low-background: 130 40% 22%; */
-    /* --risk-low-foreground: 130 50% 75%; */
+    /* Risk colors for dark mode - RE-ADDED */
+    --risk-low-background: 130 40% 22%; /* Dark Green */
+    --risk-low-foreground: 130 50% 75%; /* Light Green */
 
-    /* --risk-medium-background: 210 50% 25%; */
-    /* --risk-medium-foreground: 210 70% 78%; */
+    --risk-medium-background: 210 50% 25%; /* Dark Blue */
+    --risk-medium-foreground: 210 70% 78%; /* Light Blue */
 
-    /* --risk-high-background: 0 50% 28%; */
-    /* --risk-high-foreground: 0 75% 80%; */
+    --risk-high-background: 0 50% 28%; /* Dark Red */
+    --risk-high-foreground: 0 75% 80%; /* Light Red */
   }
 }
 
