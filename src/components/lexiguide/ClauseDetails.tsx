@@ -16,7 +16,6 @@ interface ClauseDetailsProps {
 }
 
 const RiskBadge: React.FC<{ level: RiskLevel; summary: string }> = ({ level, summary }) => {
-  let variant: 'default' | 'secondary' | 'destructive' | 'outline' = 'default';
   let className = '';
   let text = level.toUpperCase();
 
@@ -150,11 +149,11 @@ export function ClauseDetails({ clause, analysis, isLoadingAnalysis }: ClauseDet
                   <div className="space-y-3">
                     <div>
                       <h4 className="text-xs font-medium text-muted-foreground mb-1">Suggested Edits:</h4>
-                      <p className="text-sm leading-relaxed font-mono bg-green-50 dark:bg-green-900/30 p-3 rounded-md border border-green-500/50 text-green-700 dark:text-green-300">{analysis.negotiation.suggestedEdits}</p>
+                      <p className="text-sm leading-relaxed font-mono bg-accent/10 p-3 rounded-md border border-accent/20 text-accent">{analysis.negotiation.suggestedEdits}</p>
                     </div>
                     <div>
                       <h4 className="text-xs font-medium text-muted-foreground mb-1">Explanation:</h4>
-                      <p className="text-sm leading-relaxed bg-blue-50 dark:bg-blue-900/30 p-3 rounded-md border border-blue-500/50 text-blue-700 dark:text-blue-300">{analysis.negotiation.explanation}</p>
+                      <p className="text-sm leading-relaxed bg-muted/70 p-3 rounded-md border border-border">{analysis.negotiation.explanation}</p>
                     </div>
                   </div>
                 ) : <p className="text-sm text-muted-foreground">No negotiation suggestions available.</p>

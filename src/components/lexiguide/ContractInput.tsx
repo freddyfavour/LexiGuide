@@ -81,7 +81,7 @@ export function ContractInput({ onProcessContract, isLoading }: ContractInputPro
             onChange={(e) => setContractText(e.target.value)}
             placeholder="Paste the full text of your contract here..."
             rows={10}
-            className="min-h-[200px] text-sm leading-relaxed font-mono bg-white dark:bg-slate-900 rounded-md shadow-inner"
+            className="min-h-[200px] text-sm leading-relaxed font-mono rounded-md shadow-inner"
             disabled={isLoading}
           />
         </div>
