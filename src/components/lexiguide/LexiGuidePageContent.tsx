@@ -163,7 +163,7 @@ export function LexiGuidePageContent() {
   const fetchAllAnalyses = async (clausesToAnalyze: Clause[], fullContractText: string, currentProcessedClauses: ProcessedClause[]) => {
     setIsLoadingAnalyses(true);
 
-    for (const clause of clausesToAnalyze) {
+    const analysisPromises = clausesToAnalyze.map(async (clause) => {
       let riskData: RiskAssessmentOutput | undefined;
       let riskError: string | undefined;
       let negotiationData: NegotiationSuggestionsOutput | undefined;
@@ -182,19 +182,18 @@ export function LexiGuidePageContent() {
       const clauseSummary = processedClauseForNegotiation?.summary;
       const summaryError = processedClauseForNegotiation?.summaryError;
 
-      // Attempt Negotiation Suggestions with clearer dependency checking
       if (summaryError) {
-        negotiationError = `Negotiation suggestions skipped: Clause summary could not be generated.`;
+        negotiationError = `Negotiation suggestions skipped: Clause summary could not be generated. Details: ${summaryError}`;
       } else if (!clauseSummary) {
-        negotiationError = "Negotiation suggestions skipped: Clause summary is missing.";
-      } else if (riskError) { 
-        negotiationError = `Negotiation suggestions skipped: Risk assessment failed for this clause.`;
-      } else if (!riskData) { 
-        negotiationError = "Negotiation suggestions skipped: Risk assessment returned no specific data for this clause.";
-      } else { 
+        negotiationError = "Negotiation suggestions skipped: Clause summary is missing (it may still be loading or failed silently).";
+      } else if (riskError) {
+        negotiationError = `Negotiation suggestions skipped: Risk assessment failed for this clause. Details: ${riskError}`;
+      } else if (!riskData) {
+        negotiationError = "Negotiation suggestions skipped: Risk assessment returned no specific data for this clause, or is still pending.";
+      } else {
         try {
           negotiationData = await negotiationSuggestions({
-            contractText: fullContractText,
+            contractText: fullContractText, // Using fullContractText for context as per schema
             clauseSummary: clauseSummary, // This is the individual clause summary
             riskAssessment: `${riskData.riskLevel}: ${riskData.riskSummary}`,
           });
@@ -204,14 +203,35 @@ export function LexiGuidePageContent() {
         }
       }
       
-      const analysisForThisClause: Partial<Omit<ClauseAnalysisData, 'summary' | 'summaryError'>> = {
-        risk: riskData,
-        riskError,
-        negotiation: negotiationData,
-        negotiationError,
+      return {
+        clauseId: clause.id,
+        analysis: {
+          risk: riskData,
+          riskError,
+          negotiation: negotiationData,
+          negotiationError,
+        }
       };
-      
-      setClauseAnalyses(prev => ({ ...prev, [clause.id]: analysisForThisClause }));
+    });
+
+    try {
+      const allAnalysesResults = await Promise.all(analysisPromises);
+      const newAnalysesBatch: Record<string, Partial<Omit<ClauseAnalysisData, 'summary' | 'summaryError'>>> = {};
+      allAnalysesResults.forEach(result => {
+        newAnalysesBatch[result.clauseId] = result.analysis;
+      });
+      setClauseAnalyses(prev => ({ ...prev, ...newAnalysesBatch }));
+
+    } catch (error) {
+      // This catch block might not be strictly necessary if individual errors are handled within each promise,
+      // but it's good practice for Promise.all if any unhandled rejection could occur.
+      // Promise.allSettled would be an alternative if we want to guarantee all complete.
+      console.error("An error occurred during one or more analysis tasks:", error);
+      toast({
+        title: "Analysis Partially Failed",
+        description: "Some analyses could not be completed. Check console for details.",
+        variant: "destructive",
+      });
     }
     
     setIsLoadingAnalyses(false);
@@ -321,11 +341,11 @@ export function LexiGuidePageContent() {
                     </div>
                   )}
                   {!isLoadingAnalyses && !hasAnyAnalysis && contractText && !processedClauses.some(pc => pc.isLoadingSummary) && (
-                    <p className="text-muted-foreground">Overall risk analysis will appear here once processing is complete.</p>
+                    <p className="text-muted-foreground">Overall risk analysis will appear here once all individual clause analyses are complete.</p>
                   )}
                   {Object.entries(clauseAnalyses).map(([clauseId, analysis]) => {
                     const clauseData = processedClauses.find(pc => pc.clause.id === clauseId)?.clause;
-                    if (!clauseData) return null;
+                    if (!clauseData) return null; // Clause data might not be in processedClauses yet if summaries are still loading
 
                     return (
                       <div key={`${clauseId}-overall-risk`} className="p-3 border rounded-md bg-muted/30">
@@ -351,13 +371,16 @@ export function LexiGuidePageContent() {
                         ) : analysis.riskError ? (
                           <p className="text-xs text-destructive mt-1">Error assessing risk: {analysis.riskError}</p>
                         ) : (
-                          <p className="text-sm text-muted-foreground">No specific risk information identified or assessment is pending for this clause.</p>
+                          <p className="text-sm text-muted-foreground">No specific risk information identified, assessment is pending, or an error occurred preventing display.</p>
                         )}
                       </div>
                     );
                   })}
-                   {!isLoadingAnalyses && hasAnyAnalysis && Object.values(clauseAnalyses).filter(a => a.risk || a.riskError).length === 0 && (
-                     <p className="text-muted-foreground">No clauses had notable risks or risk assessment errors.</p>
+                   {!isLoadingAnalyses && hasAnyAnalysis && Object.values(clauseAnalyses).every(a => !a.risk && !a.riskError) && (
+                     <p className="text-muted-foreground">No clauses had notable risks or risk assessment errors, or assessments are still pending for all.</p>
+                   )}
+                   {!isLoadingAnalyses && !hasAnyAnalysis && contractText && (
+                    <p className="text-muted-foreground">No risk data to display. Analysis might still be running or encountered issues.</p>
                    )}
                 </CardContent>
               </Card>
@@ -373,7 +396,7 @@ export function LexiGuidePageContent() {
                     </div>
                   )}
                   {!isLoadingAnalyses && !hasAnyAnalysis && contractText && !processedClauses.some(pc => pc.isLoadingSummary) && (
-                    <p className="text-muted-foreground">Overall negotiation points will appear here once processing is complete.</p>
+                    <p className="text-muted-foreground">Overall negotiation points will appear here once all individual clause analyses are complete.</p>
                   )}
                   {Object.entries(clauseAnalyses).map(([clauseId, analysis]) => {
                     const clauseData = processedClauses.find(pc => pc.clause.id === clauseId)?.clause;
@@ -398,13 +421,16 @@ export function LexiGuidePageContent() {
                         ) : analysis.negotiationError ? (
                           <p className="text-xs text-destructive mt-1">Error suggesting negotiations: {analysis.negotiationError}</p>
                         ) : (
-                          <p className="text-sm text-muted-foreground">No specific negotiation points identified or analysis is pending for this clause.</p>
+                          <p className="text-sm text-muted-foreground">No specific negotiation points identified, analysis is pending, or an error occurred preventing display.</p>
                         )}
                       </div>
                     );
                   })}
-                  {!isLoadingAnalyses && hasAnyAnalysis && Object.values(clauseAnalyses).filter(a => a.negotiation || a.negotiationError).length === 0 && (
-                    <p className="text-muted-foreground">No clauses had notable negotiation points or related errors.</p>
+                  {!isLoadingAnalyses && hasAnyAnalysis && Object.values(clauseAnalyses).every(a => !a.negotiation && !a.negotiationError) && (
+                    <p className="text-muted-foreground">No clauses had notable negotiation points or related errors, or analyses are still pending for all.</p>
+                  )}
+                  {!isLoadingAnalyses && !hasAnyAnalysis && contractText && (
+                    <p className="text-muted-foreground">No negotiation data to display. Analysis might still be running or encountered issues.</p>
                   )}
                 </CardContent>
               </Card>
@@ -477,5 +503,3 @@ export function LexiGuidePageContent() {
     </div>
   );
 }
-
-      
