@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -43,13 +44,15 @@ body {
     --chart-5: 27 87% 67%;
     --radius: 0.5rem;
 
-    /* Risk colors */
+    /* Risk colors - Green, Blue, Red */
     --risk-low-background: 130 50% 92%; /* Lighter, softer green bg */
     --risk-low-foreground: 130 60% 25%; /* Slightly desaturated dark green text */
-    --risk-medium-background: 40 80% 92%; /* Lighter, softer yellow/orange bg */
-    --risk-medium-foreground: 40 70% 30%; /* Slightly desaturated dark yellow/orange text */
-    --risk-high-background: hsl(var(--accent));
-    --risk-high-foreground: hsl(var(--accent-foreground));
+    
+    --risk-medium-background: 210 70% 93%; /* Lighter, softer blue bg */
+    --risk-medium-foreground: 210 60% 30%; /* Desaturated dark blue text */
+    
+    --risk-high-background: 0 75% 94%; /* Lighter, softer red bg */
+    --risk-high-foreground: 0 70% 35%; /* Desaturated dark red text */
     
     /* Sidebar specific variables */
     --sidebar-background: 0 0% 100%; /* White, same as card */
@@ -97,13 +100,15 @@ body {
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%;
 
-    /* Risk colors for dark mode */
+    /* Risk colors for dark mode - Green, Blue, Red */
     --risk-low-background: 130 40% 22%; /* Darker, softer green bg */
     --risk-low-foreground: 130 50% 75%; /* Lighter, softer green text */
-    --risk-medium-background: 40 50% 22%; /* Darker, softer yellow/orange bg */
-    --risk-medium-foreground: 40 70% 75%; /* Lighter, softer yellow/orange text */
-    --risk-high-background: hsl(var(--accent));
-    --risk-high-foreground: hsl(var(--accent-foreground));
+
+    --risk-medium-background: 210 50% 25%; /* Darker, softer blue bg */
+    --risk-medium-foreground: 210 70% 78%; /* Lighter, softer blue text */
+
+    --risk-high-background: 0 50% 28%; /* Darker, softer red bg */
+    --risk-high-foreground: 0 75% 80%; /* Lighter, softer red text */
 
     /* Sidebar specific variables for dark mode */
     --sidebar-background: 220 15% 16%; /* Slightly distinct dark background */
