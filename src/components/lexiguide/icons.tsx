@@ -1,3 +1,4 @@
+
 "use client";
 
 import {
@@ -22,6 +23,9 @@ import {
   Lightbulb,
   Gavel,
   Scale,
+  Paperclip,
+  SendHorizontal,
+  User,
 } from 'lucide-react';
 
 // General App Icons
@@ -32,19 +36,23 @@ export const SettingsIcon = Settings2;
 export const LoadingIcon = ({ className }: { className?: string }) => <Loader2 className={`animate-spin ${className}`} />;
 export const InfoIcon = Info;
 export const ResetIcon = RotateCcw;
+export const UserIcon = User;
 
 // Feature Specific Icons
 export const SummaryIcon = BookMarked;
 export const RiskAssessmentIcon = ShieldAlert; // Generic, color will differentiate
 export const NegotiationIcon = Lightbulb; // Was Wand2/Sparkles, Lightbulb is more common for suggestions
 export const AdvisorIcon = BotMessageSquare; // Or BrainCircuit
+export const PaperclipIcon = Paperclip;
+export const SendIcon = SendHorizontal;
+
 
 // Risk Level Icons
 export const LowRiskIcon = ShieldCheck;
 export const MediumRiskIcon = ShieldAlert;
 export const HighRiskIcon = ShieldX; // Or MessageSquareWarning for a different take on "high risk"
 
-// Input Method Icons
+// Input Method Icons - Kept for reference, but ChatInputBar will use Paperclip/Send
 export const UploadIcon = UploadCloud;
 export const PasteIcon = ClipboardPaste;
 

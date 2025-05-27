@@ -1,6 +1,11 @@
 
 "use client";
 
+// This component is now DEPRECATED.
+// Its message display logic has been merged into LexiGuidePageContent.tsx.
+// Its input functionality has been replaced by the new ChatInputBar.tsx component
+// for a unified, conversational UI.
+
 import React, { useState, useRef, useEffect } from 'react';
 import type { AdvisorMessage } from '@/types';
 import { Button } from '@/components/ui/button';
@@ -46,14 +51,14 @@ export function AILegalAdvisor({
   };
 
   return (
-    <Card className="shadow-lg h-full flex flex-col">
+    <Card className="shadow-lg h-full flex flex-col opacity-50 pointer-events-none"> {/* Visually indicate deprecation */}
       <CardHeader className="border-b">
         <CardTitle className="flex items-center gap-2 text-lg font-semibold">
           <AdvisorIcon className="w-6 h-6 text-primary" />
-          AI Legal Advisor
+          AI Legal Advisor (Deprecated Component)
         </CardTitle>
         <CardDescription>
-          Ask questions about the loaded contract. The AI will use the contract text as context.
+          This chat interface is no longer active. Please use the main chat bar at the bottom.
         </CardDescription>
       </CardHeader>
       <CardContent className="flex-grow overflow-hidden p-0">
@@ -61,7 +66,7 @@ export function AILegalAdvisor({
           <div className="space-y-4">
             {!contractContextAvailable && messages.length === 0 && (
                <div className="text-center text-muted-foreground p-4">
-                Process a contract first to enable the AI Legal Advisor.
+                Display area for AI Legal Advisor (disabled).
               </div>
             )}
             {messages.map((msg) => (
@@ -112,14 +117,14 @@ export function AILegalAdvisor({
         <div className="flex w-full items-center space-x-2">
           <Input
             type="text"
-            placeholder={contractContextAvailable ? "Ask a question about the contract..." : "Process a contract to ask questions"}
+            placeholder={"Chat input disabled..."}
             value={question}
             onChange={(e) => setQuestion(e.target.value)}
             onKeyPress={handleKeyPress}
-            disabled={isLoading || !contractContextAvailable}
+            disabled={true}
             className="flex-grow"
           />
-          <Button onClick={handleSend} disabled={isLoading || !question.trim() || !contractContextAvailable}>
+          <Button onClick={handleSend} disabled={true}>
             Send
           </Button>
         </div>

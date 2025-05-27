@@ -1,6 +1,11 @@
 
 "use client";
 
+// This component is now DEPRECATED.
+// Its functionality for text input and file upload has been
+// integrated into the new ChatInputBar.tsx component and
+// managed by LexiGuidePageContent.tsx for a conversational UI.
+
 import React, { useState, ChangeEvent } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -65,14 +70,14 @@ export function ContractInput({ onProcessContract, isLoading }: ContractInputPro
   };
 
   return (
-    <Card className="shadow-lg">
+    <Card className="shadow-lg opacity-50 pointer-events-none"> {/* Visually indicate deprecation */}
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <ContractIcon />
-          Load Your Contract
+          Load Your Contract (Deprecated Component)
         </CardTitle>
         <CardDescription>
-          Paste your contract text below or upload a .txt file.
+          This input method is no longer active. Please use the chat bar at the bottom.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -84,10 +89,10 @@ export function ContractInput({ onProcessContract, isLoading }: ContractInputPro
             id="contract-text"
             value={contractText}
             onChange={(e) => setContractText(e.target.value)}
-            placeholder="Paste the full text of your contract here..."
+            placeholder="Pasting text here is disabled..."
             rows={8}
             className="min-h-[150px] sm:min-h-[180px] md:min-h-[200px] text-sm leading-relaxed font-mono rounded-md shadow-inner bg-background"
-            disabled={isLoading}
+            disabled={true} 
           />
         </div>
         
@@ -100,15 +105,15 @@ export function ContractInput({ onProcessContract, isLoading }: ContractInputPro
             type="file" 
             accept=".txt"
             onChange={handleFileChange}
-            disabled={isLoading} 
+            disabled={true} 
             className="text-sm file:mr-2 file:py-1.5 file:px-3 file:rounded-full file:border-0 file:text-xs file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
           />
-          <p className="text-xs text-muted-foreground">Supported format: .txt. PDF/DOCX support is coming soon.</p>
+          <p className="text-xs text-muted-foreground">File upload here is disabled.</p>
         </div>
 
-        <Button onClick={handleSubmitPastedText} disabled={isLoading || !contractText.trim()} className="w-full transition-all duration-150 ease-in-out">
+        <Button onClick={handleSubmitPastedText} disabled={true} className="w-full transition-all duration-150 ease-in-out">
           {isLoading ? <LoadingIcon className="mr-2 h-4 w-4" /> : null}
-          Process Pasted Text
+          Process Pasted Text (Disabled)
         </Button>
       </CardContent>
     </Card>
