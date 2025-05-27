@@ -31,8 +31,10 @@ export function LexiGuidePageContent() {
   const resultsEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!showInputForm) {
-      resultsEndRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    if (!showInputForm && (processedClauses.length > 0 || overallAnalysis)) {
+      // Scroll to the top of the results or a specific point if needed
+      // For now, just ensure the view updates. A specific scroll might be needed if content is very long.
+      // resultsEndRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
     }
   }, [processedClauses, overallAnalysis, showInputForm]);
 
@@ -47,16 +49,15 @@ export function LexiGuidePageContent() {
       return;
     }
     
-    setIsLoadingContractProcessing(true); // Covers splitting and setting up for summaries
+    setIsLoadingContractProcessing(true); 
     setShowInputForm(false);
     setContractText(text);
     setProcessedClauses([]);
     setOverallAnalysis(null);
     setOverallAnalysisError(null);
 
-    // Split contract into clauses
     const rawClauses = text
-      .split(/\n\s*\n+/) // Split by one or more empty lines
+      .split(/\n\s*\n+/) 
       .map((t, i) => ({ id: `clause-${Date.now()}-${i}`, text: t.trim(), originalIndex: i }))
       .filter(c => c.text.length > 0);
     
@@ -67,7 +68,7 @@ export function LexiGuidePageContent() {
         variant: "default",
       });
       setIsLoadingContractProcessing(false);
-      setShowInputForm(true); // Allow user to try again
+      setShowInputForm(true); 
       return;
     }
 
@@ -76,15 +77,14 @@ export function LexiGuidePageContent() {
       description: `Identified ${rawClauses.length} clauses. Generating summaries and overall analysis. This may take a few moments.`,
     });
     
-    setIsLoadingContractProcessing(false); // Initial processing done, now for AI calls
+    setIsLoadingContractProcessing(false);
 
-    // Fetch Summaries
     setIsLoadingSummaries(true);
     let initialProcessedClauses: ProcessedClause[] = rawClauses.map(clause => ({
       clause,
       isLoadingSummary: true,
     }));
-    setProcessedClauses(initialProcessedClauses); // Show clauses immediately with loading summaries
+    setProcessedClauses(initialProcessedClauses); 
 
     const summaryPromises = initialProcessedClauses.map(async (pc, index) => {
       try {
@@ -109,18 +109,27 @@ export function LexiGuidePageContent() {
       }
     });
     
-    await Promise.allSettled(summaryPromises); // Wait for all summaries to attempt completion
+    await Promise.allSettled(summaryPromises); 
     setIsLoadingSummaries(false);
-    toast({
-      title: "Clause Summaries Complete",
-      description: "All clause summaries have been generated.",
-    });
+    // Only show summary complete toast if there wasn't a major issue
+    if (processedClauses.some(pc => pc.summary && !pc.summaryError)){
+        toast({
+        title: "Clause Summaries Complete",
+        description: "All clause summaries have been generated.",
+        });
+    }
 
-    // Fetch Overall Analysis
+
     setIsLoadingOverallAnalysis(true);
     try {
       const overallRes = await analyzeOverallContract({ contractText: text });
       setOverallAnalysis(overallRes);
+      if (overallRes) { // Check if overallRes is not null
+        toast({
+            title: "Overall Analysis Complete",
+            description: "Holistic contract insights are now available.",
+        });
+      }
     } catch (e: any) {
       console.error("Error fetching overall contract analysis:", e);
       const errorMsg = e.message || "Failed to generate overall contract analysis.";
@@ -132,12 +141,6 @@ export function LexiGuidePageContent() {
       });
     }
     setIsLoadingOverallAnalysis(false);
-    if (!overallAnalysisError && overallAnalysis) {
-        toast({
-        title: "Overall Analysis Complete",
-        description: "Holistic contract insights are now available.",
-        });
-    }
   };
   
   const handleReset = () => {
@@ -164,18 +167,20 @@ export function LexiGuidePageContent() {
           isLoading={isProcessing} 
         />
       ) : (
-        <>
-          <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2 mb-4 sm:mb-6">
+        // This div will manage the layout for the results view
+        <div className="flex flex-col flex-1 overflow-hidden"> 
+          <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2 mb-4 sm:mb-6 px-1 pt-2">
             <h2 className="text-xl sm:text-2xl font-semibold text-primary">Contract Analysis Report</h2>
             <Button variant="outline" onClick={handleReset} disabled={isProcessing}>
               <ResetIcon className="mr-2 h-4 w-4" /> Reset & Analyze New Contract
             </Button>
           </div>
 
-          <ScrollArea className="flex-grow mb-4" style={{ maxHeight: 'calc(100vh - 200px)' /* Adjust as needed */ }}>
-            <div className="space-y-4 sm:space-y-6">
+          {/* ScrollArea will take the remaining space */}
+          <ScrollArea className="flex-1"> 
+            <div className="space-y-4 sm:space-y-6 px-1 pb-6"> {/* Added pb-6 for bottom padding within scroll */}
               <Card className="shadow-lg">
-                <CardContent className="p-4 md:p-6 divide-y">
+                <CardContent className="p-4 md:p-6 divide-y divide-border">
                   {isLoadingSummaries && processedClauses.every(pc => pc.isLoadingSummary) && (
                      <div className="flex items-center justify-center p-6 text-muted-foreground">
                         <LoadingIcon className="w-6 h-6 mr-3"/>
@@ -187,10 +192,10 @@ export function LexiGuidePageContent() {
                       <ClauseWithSummaryAccordion key={pc.clause.id} processedClause={pc} />
                     ))
                   ) : (
-                     !isLoadingSummaries && (
+                     !isProcessing && !isLoadingSummaries && ( // Show only if not processing anymore
                         <div className="flex items-center justify-center p-6 text-muted-foreground">
                             <InfoIcon className="w-6 h-6 mr-3"/>
-                            <p>No clauses to display. This might be due to an issue during processing.</p>
+                            <p>No clauses to display or an issue occurred during processing.</p>
                         </div>
                      )
                   )}
@@ -205,7 +210,7 @@ export function LexiGuidePageContent() {
               <div ref={resultsEndRef} />
             </div>
           </ScrollArea>
-        </>
+        </div>
       )}
     </div>
   );
